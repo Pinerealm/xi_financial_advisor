@@ -1,0 +1,8 @@
+statsmodels
+yfinance
+pandas
+python-dotenv
+plotly
+langgraph
+langchain_groq
+pmdarima
