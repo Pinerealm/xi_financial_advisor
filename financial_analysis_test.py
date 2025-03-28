@@ -242,6 +242,49 @@ class ReportGenerationNode:
 
         return llm.invoke(prompt).content
 
+    @staticmethod
+    def generate_market_report_with_feedback(
+        predictions: List[Dict], llm, feedback: str
+    ):
+        """
+        Generate market analysis report using LLM, incorporating analyst feedback
+
+        Args:
+            predictions (List[Dict]): Predictions for multiple assets
+            llm: Language model for report generation
+            feedback (str): Analyst feedback to incorporate
+
+        Returns:
+            Generated market analysis report with feedback incorporated
+        """
+        report_context = "\n".join(
+            [
+                f"Symbol: {pred['symbol']}\n"
+                f"Last Price: ${pred['last_price']:.2f}\n"
+                f"5-Day Forecast: {pred['forecast']['Forecast'].mean():.2f}\n"
+                f"Forecast Confidence Interval: [{pred['forecast']['LowerCI'].mean():.2f}, {pred['forecast']['UpperCI'].mean():.2f}]"
+                for pred in predictions
+                if pred
+            ]
+        )
+
+        prompt = f"""
+        Analyze the following market predictions and provide a comprehensive investment insight:
+        
+        {report_context}
+        
+        Please incorporate this analyst feedback in your analysis:
+        {feedback}
+        
+        Based on these predictions and feedback, provide:
+        1. Overall market sentiment
+        2. Potential investment strategies
+        3. Risk assessment
+        4. Short-term market outlook
+        """
+
+        return llm.invoke(prompt).content
+
 
 class VisualizationNode:
     @staticmethod
@@ -357,11 +400,39 @@ def build_financial_analysis_workflow():
         },
     )
 
+    # Add a feedback processing node
+    workflow.add_node(
+        "process_feedback",
+        lambda state: {
+            **state,
+            "analysis_report": ReportGenerationNode.generate_market_report_with_feedback(
+                state["predictions"], llm, state["analyst_feedback"]
+            ),
+            "analyst_feedback": "",  # Reset feedback after processing
+        },
+    )
+
+    # Define the conditional router based on feedback
+    def feedback_router(state):
+        if state.get("analyst_feedback") and state["analyst_feedback"].strip():
+            return "process_feedback"
+        else:
+            return "visualization"
+
     # Define edges
     workflow.add_edge("data_ingestion", "data_preprocessing")
     workflow.add_edge("data_preprocessing", "predictive_modeling")
     workflow.add_edge("predictive_modeling", "report_generation")
-    workflow.add_edge("report_generation", "visualization")
+
+    # Add conditional edge for feedback routing
+    workflow.add_conditional_edges(
+        "report_generation",
+        feedback_router,
+        {"process_feedback": "process_feedback", "visualization": "visualization"},
+    )
+
+    # Connect process_feedback back to visualization
+    workflow.add_edge("process_feedback", "visualization")
     workflow.add_edge("visualization", END)
 
     # Set starting point
