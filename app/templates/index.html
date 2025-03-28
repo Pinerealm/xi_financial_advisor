@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Market Analysis System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="text-center mb-5">
+                <h1 class="display-4">Financial Market Analysis System</h1>
+                <p class="lead">A modular system for analyzing financial markets and generating AI-powered reports</p>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 analysis-card">
+                        <div class="card-body">
+                            <h2 class="card-title h4">Market Dashboard</h2>
+                            <p class="card-text">View real-time market data, predictions, and visualizations for selected financial assets.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Interactive stock charts</li>
+                                <li><i class="bi bi-check-circle-fill text-primary me-2"></i> ARIMA-based price predictions</li>
+                                <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Dynamic time horizon selection</li>
+                            </ul>
+                            <div class="text-center mt-4">
+                                <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 analysis-card">
+                        <div class="card-body">
+                            <h2 class="card-title h4">Analysis Reports</h2>
+                            <p class="card-text">Access AI-generated market analysis reports and provide expert feedback.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle-fill text-primary me-2"></i> LLM-powered market insights</li>
+                                <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Trend identification</li>
+                                <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Interactive feedback mechanism</li>
+                            </ul>
+                            <div class="text-center mt-4">
+                                <a href="/reports" class="btn btn-secondary">View Reports</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card analysis-card">
+                        <div class="card-body">
+                            <h2 class="card-title h4">Available Assets</h2>
+                            <p class="card-text">The system currently tracks and analyzes the following financial assets:</p>
+                            
+                            <div class="d-flex flex-wrap mt-3" id="asset-list">
+                                <div class="badge bg-primary stock-badge m-1">AAPL</div>
+                                <div class="badge bg-primary stock-badge m-1">GOOGL</div>
+                                <div class="badge bg-primary stock-badge m-1">MSFT</div>
+                                <div class="badge bg-primary stock-badge m-1">AMZN</div>
+                                <div class="badge bg-primary stock-badge m-1">TSLA</div>
+                            </div>
+                            
+                            <p class="mt-3 small text-muted">The system uses ARIMA modeling to forecast future prices and AI to generate analytical reports.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card analysis-card">
+                        <div class="card-body">
+                            <h2 class="card-title h4">About the System</h2>
+                            <p>The Financial Market Analysis and Reporting System is a modular platform designed to:</p>
+                            <ul>
+                                <li>Fetch real-time financial data from reliable sources</li>
+                                <li>Preprocess and analyze market trends using statistical methods</li>
+                                <li>Generate price forecasts using ARIMA time series models</li>
+                                <li>Provide AI-powered market insights and recommendations</li>
+                                <li>Allow experts to contribute feedback to improve analysis</li>
+                                <li>Visualize market data and predictions in an interactive format</li>
+                            </ul>
+                            <p>The system uses LangGraph for workflow orchestration, FastAPI for backend services, and interactive visualizations powered by Plotly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

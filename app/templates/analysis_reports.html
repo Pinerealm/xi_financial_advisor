@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Reports | Financial Market Analysis System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Fetch and display reports
+    fetchReports();
+    
+    // Add event listener to the feedback form
+    const feedbackForm = document.getElementById('report-feedback-form');
+    if (feedbackForm) {
+        feedbackForm.addEventListener('submit', submitFeedback);
+    }
+    
+    // Add event listener to asset and time horizon selectors
+    const assetSelector = document.getElementById('asset-selector');
+    const timeHorizonSelector = document.getElementById('report-time-horizon');
+    
+    if (assetSelector && timeHorizonSelector) {
+        assetSelector.addEventListener('change', updateFilters);
+        timeHorizonSelector.addEventListener('change', updateFilters);
+    }
+    
+    // Load available assets
+    loadAvailableAssets();
+});
+
+// Load available assets for selection
+async function loadAvailableAssets() {
+    try {
+        showLoading(true);
+        const response = await fetch('/api/available-assets');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const assets = await response.json();
+        const assetSelector = document.getElementById('asset-selector');
+        
+        if (assetSelector) {
+            // Clear existing options
+            assetSelector.innerHTML = '';
+            
+            // Add a "Select all" option
+            const allOption = document.createElement('option');
+            allOption.value = 'all';
+            allOption.textContent = 'All Assets';
+            assetSelector.appendChild(allOption);
+            
+            // Add individual asset options
+            assets.forEach(asset => {
+                const option = document.createElement('option');
+                option.value = asset.symbol;
+                option.textContent = asset.symbol;
+                assetSelector.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading available assets:', error);
+        showMessage('error', 'Failed to load available assets. Please try again later.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Fetch reports based on selected filters
+async function fetchReports() {
+    try {
+        showLoading(true);
+        
+        const assetSelector = document.getElementById('asset-selector');
+        const timeHorizonSelector = document.getElementById('report-time-horizon');
+        
+        let selectedAsset = assetSelector ? assetSelector.value : 'all';
+        let selectedTimeHorizon = timeHorizonSelector ? timeHorizonSelector.value : '6mo';
+        
+        let url = '/api/analysis-report';
+        if (selectedAsset !== 'all') {
+            url += `?symbols=${selectedAsset}`;
+        }
+        url += (selectedAsset !== 'all' ? '&' : '?') + `time_horizon=${selectedTimeHorizon}`;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const report = await response.json();
+        displayReport(report);
+    } catch (error) {
+        console.error('Error fetching reports:', error);
+        showMessage('error', 'Failed to load reports. Please try again later.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Display the analysis report
+function displayReport(report) {
+    const reportContainer = document.getElementById('report-container');
+    
+    if (reportContainer) {
+        reportContainer.innerHTML = `
+            <div class="card analysis-card">
+                <div class="card-header">
+                    <h4>Market Analysis Report</h4>
+                    <p class="text-muted mb-0">Generated on: ${new Date(report.timestamp).toLocaleString()}</p>
+                </div>
+                <div class="card-body">
+                    <div class="assets-analyzed mb-3">
+                        <strong>Assets Analyzed:</strong> 
+                        ${report.assets_analyzed.map(symbol => 
+                            `<span class="badge bg-secondary stock-badge">${symbol}</span>`
+                        ).join('')}
+                    </div>
+                    <div class="time-horizon mb-3">
+                        <strong>Time Horizon:</strong> ${report.time_horizon}
+                    </div>
+                    <div class="report-content">
+                        ${report.report.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Display visualizations if available
+        const visualizationsContainer = document.getElementById('visualizations-container');
+        if (visualizationsContainer) {
+            visualizationsContainer.innerHTML = '';
+            
+            if (report.visualization_paths && report.visualization_paths.length > 0) {
+                visualizationsContainer.innerHTML = '<h4 class="mt-4">Visualizations</h4>';
+                
+                report.visualization_paths.forEach(path => {
+                    const iframe = document.createElement('iframe');
+                    iframe.className = 'visualization-frame';
+                    iframe.src = `/${path}`;
+                    visualizationsContainer.appendChild(iframe);
+                });
+            }
+        }
+    }
+}
+
+// Submit analyst feedback
+async function submitFeedback(event) {
+    event.preventDefault();
+    
+    const feedbackContent = document.getElementById('feedback-content').value.trim();
+    const assetSelector = document.getElementById('asset-selector');
+    const timeHorizonSelector = document.getElementById('report-time-horizon');
+    
+    let selectedAssets = [];
+    if (assetSelector.value === 'all') {
+        // Get all available assets
+        const response = await fetch('/api/available-assets');
+        const assets = await response.json();
+        selectedAssets = assets.map(asset => asset.symbol);
+    } else {
+        selectedAssets = [assetSelector.value];
+    }
+    
+    const selectedTimeHorizon = timeHorizonSelector.value;
+    
+    if (!feedbackContent) {
+        showMessage('error', 'Please provide feedback content.');
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        
+        const response = await fetch('/api/analyst-feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                feedback_content: feedbackContent,
+                symbols: selectedAssets,
+                time_horizon: selectedTimeHorizon
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const updatedReport = await response.json();
+        displayReport(updatedReport);
+        
+        // Clear feedback textarea
+        document.getElementById('feedback-content').value = '';
+        
+        // Show success message
+        showMessage('success', 'Feedback submitted successfully and report updated.');
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        showMessage('error', 'Failed to submit feedback. Please try again later.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Update filters and fetch reports
+function updateFilters() {
+    fetchReports();
+}
+
+// Show loading indicator
+function showLoading(show) {
+    const loadingSpinner = document.getElementById('report-loading-spinner');
+    if (loadingSpinner) {
+        loadingSpinner.style.display = show ? 'flex' : 'none';
+    }
+}
+
+// Show message (success or error)
+function showMessage(type, message) {
+    const alertContainer = document.getElementById('report-alert-container');
+    if (alertContainer) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        alert.role = 'alert';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertContainer.appendChild(alert);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+        }, 5000);
+    }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Market Analysis Reports</h1>
+            <p class="text-muted">AI-generated market insights and investment recommendations</p>
+            
+            <div id="report-alert-container"></div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Report Filters</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="asset-selector" class="form-label">Select Asset:</label>
+                            <select class="form-select" id="asset-selector">
+                                <option value="all">All Assets</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="report-time-horizon" class="form-label">Time Horizon:</label>
+                            <select class="form-select" id="report-time-horizon">
+                                <option value="1mo">1 Month</option>
+                                <option value="3mo">3 Months</option>
+                                <option value="6mo" selected>6 Months</option>
+                                <option value="1y">1 Year</option>
+                                <option value="2y">2 Years</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading-spinner text-center my-5" id="report-loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            
+            <div id="report-container">
+                <!-- Report will be rendered here -->
+            </div>
+            
+            <div id="visualizations-container" class="mt-4">
+                <!-- Visualizations will be rendered here -->
+            </div>
+            
+            <div class="card mt-5 mb-5">
+                <div class="card-header">
+                    <h5 class="mb-0">Analyst Feedback</h5>
+                </div>
+                <div class="card-body">
+                    <p>Provide your expert insights to improve the market analysis:</p>
+                    
+                    <form id="report-feedback-form">
+                        <div class="mb-3">
+                            <label for="feedback-content" class="form-label">Your Analysis:</label>
+                            <textarea class="form-control" id="feedback-content" rows="5" placeholder="Share your insights, observations, or corrections to improve the market analysis..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

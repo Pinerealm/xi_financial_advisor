@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Market Dashboard | Financial Market Analysis System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+    <div class="dashboard-header">
+        <h1>Financial Market Dashboard</h1>
+        <p class="text-muted">Real-time financial data analysis and forecasting</p>
+    </div>
+    
+    <div id="alert-container"></div>
+    
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Dashboard Controls</h5>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Select Assets:</label>
+                                <div id="symbol-selector" class="d-flex flex-wrap">
+                                    <!-- Asset checkboxes will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="time-horizon" class="form-label">Time Horizon:</label>
+                                <select class="form-select" id="time-horizon">
+                                    <option value="1mo">1 Month</option>
+                                    <option value="3mo">3 Months</option>
+                                    <option value="6mo" selected>6 Months</option>
+                                    <option value="1y">1 Year</option>
+                                    <option value="2y">2 Years</option>
+                                    <option value="5y">5 Years</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <ul class="nav nav-tabs mb-3" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="predictions-tab" data-bs-toggle="tab" data-bs-target="#predictions" type="button" role="tab" aria-controls="predictions" aria-selected="true">
+                        Price Predictions
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="visualizations-tab" data-bs-toggle="tab" data-bs-target="#visualizations" type="button" role="tab" aria-controls="visualizations" aria-selected="false">
+                        Visualizations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="report-tab" data-bs-toggle="tab" data-bs-target="#report" type="button" role="tab" aria-controls="report" aria-selected="false">
+                        Analysis Report
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="dashboardTabContent">
+                <div class="tab-pane fade show active" id="predictions" role="tabpanel" aria-labelledby="predictions-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">5-Day Price Forecasts</h5>
+                            <p class="text-muted">ARIMA model predictions with confidence intervals</p>
+                            
+                            <div id="chart-container">
+                                <!-- Prediction charts will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="visualizations" role="tabpanel" aria-labelledby="visualizations-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Interactive Visualizations</h5>
+                            <p class="text-muted">Detailed visualizations of price forecasts</p>
+                            
+                            <div id="visualization-container">
+                                <!-- Visualizations will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="report" role="tabpanel" aria-labelledby="report-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Market Analysis Report</h5>
+                            <p class="text-muted">AI-generated insights based on financial data and predictions</p>
+                            
+                            <div class="report-container" id="analysis-report">
+                                <!-- Analysis report will be rendered here -->
+                            </div>
+                            
+                            <div class="feedback-form" id="feedback-form-container">
+                                <h5>Provide Analyst Feedback</h5>
+                                <p class="text-muted">Your expert insights will improve the analysis</p>
+                                
+                                <form id="feedback-form">
+                                    <div class="mb-3">
+                                        <label for="feedback-content" class="form-label">Feedback:</label>
+                                        <textarea class="form-control" id="feedback-content" rows="4" placeholder="Enter your analysis, observations, or corrections..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
